@@ -1,0 +1,42 @@
+{
+  "version": "0.1.0",
+  "name": "counter",
+  "instructions": [
+    {
+      "name": "decrement",
+      "accounts": [
+        { "name": "modify_author", "isMut": true, "isSigner": true },
+        { "name": "counter_modifier", "isMut": true, "isSigner": false },
+        { "name": "counter", "isMut": true, "isSigner": false },
+        { "name": "system_program", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "increment",
+      "accounts": [
+        { "name": "modify_author", "isMut": true, "isSigner": true },
+        { "name": "counter_modifier", "isMut": true, "isSigner": false },
+        { "name": "counter", "isMut": true, "isSigner": false },
+        { "name": "system_program", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "accounts": [
+        { "name": "counter_authority", "isMut": true, "isSigner": true },
+        { "name": "counter", "isMut": true, "isSigner": false },
+        { "name": "system_program", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "value", "type": "u64" }
+      ]
+    }
+  ],
+  "accounts": [],
+  "errors": [],
+  "metadata": {
+    "address": "HfB2cjfBFP8LBdnHLPMvV7bLswPS8TuyFY8ugDVCWLxK"
+  }
+}
