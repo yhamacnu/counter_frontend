@@ -30,14 +30,13 @@ function getRuntimeRpc(): string | null {
   return null;
 }
 
-const RUNTIME_RPC = getRuntimeRpc();
-
 // If running in a browser on a non-localhost host and no runtime override is
 // provided, prefer Devnet so deployed sites use a public RPC instead of
 // attempting to contact the developer's localhost. This only runs in the
 // browser (not at build time).
 function chooseRpc(): string {
-  if (RUNTIME_RPC) return RUNTIME_RPC;
+  const runtimeRpc = getRuntimeRpc();
+  if (runtimeRpc) return runtimeRpc;
   // If a build-time env is set and it's not localhost, use it.
   if (DEFAULT_RPC && !DEFAULT_RPC.includes("localhost") && !DEFAULT_RPC.includes("127.0.0.1")) {
     return DEFAULT_RPC;
@@ -53,8 +52,6 @@ function chooseRpc(): string {
   // Fallback to the default (possibly localhost) value
   return DEFAULT_RPC;
 }
-
-const RPC_URL = chooseRpc();
 
 // Minimal strongly-typed Phantom provider surface we use in the dApp
 export interface PhantomProvider {
@@ -79,7 +76,8 @@ function makeWalletAdapter(phatomProvider: PhantomProvider): Wallet {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function getProgram() {
-  const connection = new Connection(RPC_URL, "processed");
+  const rpcUrl = chooseRpc();
+  const connection = new Connection(rpcUrl, "processed");
 
   const win = window as unknown as { solana?: PhantomProvider };
   const wallet = win.solana;
