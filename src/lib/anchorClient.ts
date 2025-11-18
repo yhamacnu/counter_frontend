@@ -11,6 +11,51 @@ export const PROGRAM_ID = new PublicKey(idlTyped.metadata?.address || "");
 
 const DEFAULT_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || "http://localhost:8899";
 
+// Allow runtime override for deployed builds so the app isn't permanently
+// bound to the value of NEXT_PUBLIC_SOLANA_RPC that was present at build time.
+// Supports:
+//  - window.SOLANA_RPC = "https://api.devnet.solana.com"
+//  - ?rpc=https://api.devnet.solana.com  (URL query param)
+function getRuntimeRpc(): string | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as { SOLANA_RPC?: unknown };
+  if (w.SOLANA_RPC && typeof w.SOLANA_RPC === "string") return w.SOLANA_RPC;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("rpc");
+    if (q) return q;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+const RUNTIME_RPC = getRuntimeRpc();
+
+// If running in a browser on a non-localhost host and no runtime override is
+// provided, prefer Devnet so deployed sites use a public RPC instead of
+// attempting to contact the developer's localhost. This only runs in the
+// browser (not at build time).
+function chooseRpc(): string {
+  if (RUNTIME_RPC) return RUNTIME_RPC;
+  // If a build-time env is set and it's not localhost, use it.
+  if (DEFAULT_RPC && !DEFAULT_RPC.includes("localhost") && !DEFAULT_RPC.includes("127.0.0.1")) {
+    return DEFAULT_RPC;
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isLocalhost = host === "localhost" || host === "127.0.0.1" || host === "::1";
+    if (!isLocalhost) {
+      // We're running in a deployed browser context. Prefer Devnet public RPC.
+      return "https://api.devnet.solana.com";
+    }
+  }
+  // Fallback to the default (possibly localhost) value
+  return DEFAULT_RPC;
+}
+
+const RPC_URL = chooseRpc();
+
 // Minimal strongly-typed Phantom provider surface we use in the dApp
 export interface PhantomProvider {
   publicKey?: SolPublicKey;
@@ -34,7 +79,7 @@ function makeWalletAdapter(phatomProvider: PhantomProvider): Wallet {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function getProgram() {
-  const connection = new Connection(DEFAULT_RPC, "processed");
+  const connection = new Connection(RPC_URL, "processed");
 
   const win = window as unknown as { solana?: PhantomProvider };
   const wallet = win.solana;
@@ -61,7 +106,7 @@ export async function getProgram() {
     }
   }
 
-  const program = new Program(idlTyped, PROGRAM_ID, provider);
+    const program = new Program(idlTyped, PROGRAM_ID, provider);
   return { program, provider, connection };
 }
 
