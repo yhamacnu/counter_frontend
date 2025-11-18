@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
@@ -39,8 +40,9 @@ export default function CounterPage() {
       await w.connect();
       setConnected(true);
       setPubkey(w.publicKey as PublicKey);
-    } catch (err: any) {
-      setStatus(String(err.message || err));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(msg);
     }
   }
 
@@ -49,11 +51,12 @@ export default function CounterPage() {
     try {
       const { program } = await getProgram();
       const [counterPda] = await findCounterPda(pubkey);
-      const account = await program.account.counter.fetch(counterPda);
+      const account = (await program.account.counter.fetch(counterPda)) as { counter: BN };
       setCounterValue(account.counter.toNumber());
       setStatus("Fetched counter");
-    } catch (err: any) {
-      setStatus(String(err.message || err));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(msg);
       setCounterValue(null);
     }
   }
